@@ -1,31 +1,34 @@
 ﻿using System;
-using System.IO;
-using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using Newtonsoft.Json;
 
 namespace LendingClubDotNet.Client
 {
-	public static class RequestUtility
+    public static class RequestUtility
 	{
 		public static TResponse ExecuteGetRequest<TResponse>(string url, string authorizationToken)
 		{
-			HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(url);
-
-			webRequest.ContentType = "application/x-www-form-urlencoded";
-			webRequest.Accept = "application/json";
-
-			webRequest.Headers.Add("Authorization", authorizationToken);
-
 			string jsonResponse;
 
-			using (WebResponse webResponse = webRequest.GetResponse())
-			using (Stream str = webResponse.GetResponseStream())
+			using(var client = new HttpClient())
 			{
-				if (str == null)
-					throw new InvalidOperationException("ResponseStream was null.");
+				client.DefaultRequestHeaders
+					.Accept
+					.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-				using (StreamReader sr = new StreamReader(str))
-					jsonResponse = sr.ReadToEnd();
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", (authorizationToken));
+
+
+				var response = client.GetAsync(url).Result;
+
+				if(!response.IsSuccessStatusCode)
+				{
+					throw new InvalidOperationException(response.StatusCode.ToString());					
+				}
+
+				var content = response.Content;
+				jsonResponse = content.ReadAsStringAsync().Result;
 			}
 
 			return JsonConvert.DeserializeObject<TResponse>(jsonResponse);
@@ -33,29 +36,28 @@ namespace LendingClubDotNet.Client
 
 		public static TResponse ExecutePostRequest<TRequest, TResponse>(TRequest requestValue, string url, string authorizationToken)
 		{
-			HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
-			webRequest.Method = WebRequestMethods.Http.Post;
+            //TODO needs testing
 
-			webRequest.Accept = "application/json";
-			webRequest.ContentType = "application/json";
-			webRequest.Headers.Add("Authorization", authorizationToken);
+            string jsonResponse;
 
-			string jsonData = JsonConvert.SerializeObject(requestValue);
-			using (Stream s = webRequest.GetRequestStream())
-			{
-				using (StreamWriter sw = new StreamWriter(s))
-					sw.Write(jsonData);
-			}
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders
+                    .Accept
+                    .Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-			string jsonResponse;
-			using (WebResponse webResponse = webRequest.GetResponse())
-			using (Stream str = webResponse.GetResponseStream())
-			{
-				if (str == null)
-					throw new InvalidOperationException("ResponseStream was null.");
+                client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", (authorizationToken));
 
-				using (StreamReader sr = new StreamReader(str))
-					jsonResponse = sr.ReadToEnd();
+                string jsonData = JsonConvert.SerializeObject(requestValue);
+
+                var response = client.PostAsync(url, new StringContent(jsonData)).Result;
+
+                if(!response.IsSuccessStatusCode)
+                {
+                    throw new InvalidOperationException(response.StatusCode.ToString());
+                }
+				var content = response.Content;
+				jsonResponse = content.ReadAsStringAsync().Result;
 			}
 
 			return JsonConvert.DeserializeObject<TResponse>(jsonResponse);
