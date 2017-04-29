@@ -1,7 +1,7 @@
 LendingClubDotNet
 =========
 
-C# (.NET v4.5) Client for the Lending Club API
+C# (.NET Core) Client for the Lending Club API
 
 Example usage:
 ```
