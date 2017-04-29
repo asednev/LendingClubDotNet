@@ -35,6 +35,8 @@ SubmitOrdersResponse submitOrdersResponse = lendingClubV1Client.AccountResource.
 See the official Lending Club API documentation here:
 https://www.lendingclub.com/developers/lc-api.action
 
-
-If you want more information about me, Justin Blackwood, go here:
+Library targeting .NET Framework was originally created by Justin Blackwood:
 https://www.linkedin.com/in/justinedwardblackwood
+
+Forked from: 
+https://github.com/jblackwood12/LendingClubDotNet
